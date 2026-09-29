@@ -61,6 +61,41 @@ fun ScreenUser() {
             label = { Text("Last Name:") },
             singleLine = true
         )
-        // Aquí irán los botones (parte B)
+        Button(
+            onClick = {
+                val user = User(0, firstName, lastName)
+                coroutineScope.launch {
+                    AgregarUsuario(user = user, dao = dao)
+                }
+                firstName = ""
+                lastName = ""
+            }
+        ) {
+            Text("Agregar Usuario", fontSize = 16.sp)
+        }
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    dataUser.value = getUsers(dao = dao)
+                }
+            }
+        ) {
+            Text("Listar Usuarios", fontSize = 16.sp)
+        }
+
+        Text(text = dataUser.value, fontSize = 20.sp)
+    }
+}
+suspend fun getUsers(dao: UserDao): String {
+    val users = dao.getAll()
+    return users.joinToString("\n") { "${it.firstName} - ${it.lastName}" }
+}
+
+suspend fun AgregarUsuario(user: User, dao: UserDao) {
+    try {
+        dao.insert(user)
+    } catch (e: Exception) {
+        Log.e("User", "Error: insert: ${e.message}")
     }
 }
