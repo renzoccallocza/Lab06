@@ -21,7 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.room.Room
 import kotlinx.coroutines.launch
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScreenUser() {
     val context = LocalContext.current
@@ -36,66 +41,69 @@ fun ScreenUser() {
     val dataUser = remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        Spacer(Modifier.height(50.dp))
-        TextField(
-            value = id,
-            onValueChange = { id = it },
-            label = { Text("ID (solo lectura)") },
-            readOnly = true,
-            singleLine = true
-        )
-        TextField(
-            value = firstName,
-            onValueChange = { firstName = it },
-            label = { Text("First Name:") },
-            singleLine = true
-        )
-        TextField(
-            value = lastName,
-            onValueChange = { lastName = it },
-            label = { Text("Last Name:") },
-            singleLine = true
-        )
-        Button(
-            onClick = {
-                val user = User(0, firstName, lastName)
-                coroutineScope.launch {
-                    AgregarUsuario(user = user, dao = dao)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Usuarios") },
+                actions = {
+                    TextButton(onClick = {
+                        val user = User(0, firstName, lastName)
+                        coroutineScope.launch {
+                            AgregarUsuario(user = user, dao = dao)
+                        }
+                        firstName = ""
+                        lastName = ""
+                    }) {
+                        Text("Agregar")
+                    }
+                    TextButton(onClick = {
+                        coroutineScope.launch {
+                            dataUser.value = getUsers(dao = dao)
+                        }
+                    }) {
+                        Text("Listar")
+                    }
                 }
-                firstName = ""
-                lastName = ""
-            }
-        ) {
-            Text("Agregar Usuario", fontSize = 16.sp)
+            )
         }
-
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    dataUser.value = getUsers(dao = dao)
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
+        ) {
+            TextField(
+                value = id,
+                onValueChange = { id = it },
+                label = { Text("ID (solo lectura)") },
+                readOnly = true,
+                singleLine = true
+            )
+            TextField(
+                value = firstName,
+                onValueChange = { firstName = it },
+                label = { Text("First Name:") },
+                singleLine = true
+            )
+            TextField(
+                value = lastName,
+                onValueChange = { lastName = it },
+                label = { Text("Last Name:") },
+                singleLine = true
+            )
+            Button(
+                onClick = {
+                    coroutineScope.launch {
+                        EliminarUltimo(dao = dao)
+                        dataUser.value = getUsers(dao = dao)
+                    }
                 }
+            ) {
+                Text("Eliminar Último", fontSize = 16.sp)
             }
-        ) {
-            Text("Listar Usuarios", fontSize = 16.sp)
+            Text(text = dataUser.value, fontSize = 20.sp)
         }
-
-        Button(
-            onClick = {
-                coroutineScope.launch {
-                    EliminarUltimo(dao = dao)
-                    dataUser.value = getUsers(dao = dao)
-                }
-            }
-        ) {
-            Text("Eliminar Último", fontSize = 16.sp)
-        }
-
-        Text(text = dataUser.value, fontSize = 20.sp)
     }
 }
 suspend fun getUsers(dao: UserDao): String {
